@@ -32,10 +32,11 @@ python3 -m moshi.server \
   --static "$MODEL_DIR/dist" &
 MOSHI_PID=$!
 
-python3 /app/runtime/verda/status_ui.py &
-GRADIO_PID=$!
-
-wait -n "$MOSHI_PID" "$GRADIO_PID" "$NGINX_PID"
+# The PersonaPlex browser client is served by Moshi through Nginx.  The
+# optional Gradio status page is intentionally not started: Gradio's bundled
+# web stack is independent of the duplex service and must never take the
+# whole GPU worker down if it fails to initialize.
+wait -n "$MOSHI_PID" "$NGINX_PID"
 STATUS=$?
 trap - EXIT
 cleanup
