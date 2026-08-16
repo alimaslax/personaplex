@@ -457,6 +457,10 @@ def main():
     logger.info("warming up the model")
     state.warmup()
     app = web.Application()
+    async def health(_):
+        return web.json_response({"status": "ready"})
+
+    app.router.add_get("/health", health)
     app.router.add_get("/api/chat", state.handle_chat)
     if static_path is not None:
         async def handle_root(_):
