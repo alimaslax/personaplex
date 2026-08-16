@@ -85,9 +85,11 @@ and local browser client as one deployment system.
 - Set `TAILSCALE_ENABLE=1` in Verda to enable the private access path.
   `entrypoint.sh` starts `tailscaled` with userspace networking and persists
   its node state at `/data/tailscale/tailscaled.state`.
-- With no `TAILSCALE_AUTHKEY`, startup prints a one-time Tailscale approval URL
-  in the replica logs. Open it while signed into the intended tailnet. This is
-  intentional: it avoids storing a reusable tailnet credential in Verda.
+- With no `TAILSCALE_AUTHKEY`, the first startup prints a one-time Tailscale
+  approval URL in the replica logs. Open it while signed into the intended
+  tailnet. Later starts reuse `/data/tailscale/tailscaled.state` and reconnect
+  automatically; they should not need another approval. This avoids storing a
+  reusable tailnet credential in Verda.
 - If using `TAILSCALE_AUTHKEY`, configure it as a **Verda secret**, never as a
   GitHub secret, Docker build argument, or checked-in environment variable.
 - After approval, the logs report the assigned tailnet IP. Tailscale Serve

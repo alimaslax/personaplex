@@ -23,9 +23,9 @@ start_tailscale() {
     sleep 1
   done
 
-  # With no auth key, force a fresh login and print its one-time URL to the
-  # replica log. This also handles a reused container disk that holds an old
-  # device state from a previous replica.
+  # With no auth key, `tailscale up` reuses the identity persisted on the
+  # /data disk. On a first-ever boot it prints a one-time login URL; on a
+  # resumed replica it reconnects without asking the owner to approve again.
   # This keeps tailnet authorization in the account owner's browser instead of
   # embedding a reusable tailnet credential in the deployment.
   if [[ -n "${TAILSCALE_AUTHKEY:-}" ]]; then
@@ -36,7 +36,6 @@ start_tailscale() {
   else
     echo "[personaplex-tailscale] login link follows; approve it in your Tailscale account"
     tailscale --socket=/tmp/tailscaled.sock up \
-      --force-reauth \
       --hostname=personaplex-live \
       --accept-dns=false
   fi
