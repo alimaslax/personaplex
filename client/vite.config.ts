@@ -5,12 +5,20 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd());
   const inferenceKey = process.env.PERSONAPLEX_INFERENCE_KEY;
   const upstreamBasePath = env.VITE_QUEUE_API_BASE_PATH?.replace(/\/$/, "");
+  const stripApiPrefix = env.VITE_QUEUE_API_STRIP_PREFIX === "true";
   const proxyConf:Record<string, string | ProxyOptions> = env.VITE_QUEUE_API_URL ? {
     "/api": {
       target: env.VITE_QUEUE_API_URL,
       changeOrigin: true,
       ws: true,
-      ...(upstreamBasePath ? { rewrite: (path: string) => `${upstreamBasePath}${path}` } : {}),
+      ...(upstreamBasePath || stripApiPrefix ? {
+        rewrite: (path: string) => {
+          const upstreamPath = stripApiPrefix
+            ? path.replace(/^\/api(?=\/|$)/, "")
+            : path;
+          return `${upstreamBasePath ?? ""}${upstreamPath}`;
+        },
+      } : {}),
       ...(env.VITE_PROXY_DEBUG === "true" ? {
         configure: (proxy: { on: (event: string, callback: (error: Error) => void) => void }) => {
           proxy.on("error", (error) => console.error("PersonaPlex upstream proxy error:", error.message));
