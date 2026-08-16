@@ -14,10 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 COPY moshi /app/moshi
+# Gradio 4 keeps compatibility with PersonaPlex's pinned
+# huggingface-hub<0.25 dependency.
 RUN python3 -m pip install --upgrade pip \
     && python3 -m pip install --index-url https://download.pytorch.org/whl/cu124 torch==2.4.1 \
-    # Gradio 4 keeps compatibility with PersonaPlex's pinned
-    # huggingface-hub<0.25 dependency.
     && python3 -m pip install /app/moshi gradio==4.44.1
 
 COPY runtime/verda /app/runtime/verda
