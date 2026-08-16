@@ -32,7 +32,7 @@ python3 -m moshi.server \
   --static "$MODEL_DIR/dist" &
 MOSHI_PID=$!
 
-python3 /app/runtime/verda/gradio_client.py &
+python3 /app/runtime/verda/status_ui.py &
 GRADIO_PID=$!
 
 wait -n "$MOSHI_PID" "$GRADIO_PID" "$NGINX_PID"
