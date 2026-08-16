@@ -14,11 +14,15 @@ NGINX_PID=$!
 start_tailscale() {
   [[ "${TAILSCALE_ENABLE:-0}" == "1" ]] || return 0
 
+  echo "[personaplex-tailscale] waiting for daemon"
+
   until tailscale --socket=/tmp/tailscaled.sock status >/dev/null 2>&1; do
     sleep 1
   done
 
-  # With no auth key, Tailscale prints a one-time login URL to the replica log.
+  # With no auth key, force a fresh login and print its one-time URL to the
+  # replica log. This also handles a reused container disk that holds an old
+  # device state from a previous replica.
   # This keeps tailnet authorization in the account owner's browser instead of
   # embedding a reusable tailnet credential in the deployment.
   if [[ -n "${TAILSCALE_AUTHKEY:-}" ]]; then
@@ -27,9 +31,11 @@ start_tailscale() {
       --hostname=personaplex-live \
       --accept-dns=false
   else
+    echo "[personaplex-tailscale] login link follows; approve it in your Tailscale account"
     tailscale --socket=/tmp/tailscaled.sock up \
+      --force-reauth \
       --hostname=personaplex-live \
-      --accept-dns=false || true
+      --accept-dns=false
   fi
 
   until TAILSCALE_IP="$(tailscale --socket=/tmp/tailscaled.sock ip -4 2>/dev/null)"; [[ -n "$TAILSCALE_IP" ]]; do
