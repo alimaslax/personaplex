@@ -1,6 +1,13 @@
 name: Publish PersonaPlex Verda image
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile.verda
+      - moshi/**
+      - runtime/verda/**
+      - .github/workflows/publish-verda-image.yml
   workflow_dispatch:
     inputs:
       tag:
