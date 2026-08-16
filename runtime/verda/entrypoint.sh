@@ -16,7 +16,10 @@ start_tailscale() {
 
   echo "[personaplex-tailscale] waiting for daemon"
 
-  until tailscale --socket=/tmp/tailscaled.sock status >/dev/null 2>&1; do
+  # `tailscale status` is non-zero while the daemon is logged out, which is
+  # exactly when we need to run `tailscale up`. Wait for its control socket
+  # instead of waiting for an already-authenticated status.
+  until [[ -S /tmp/tailscaled.sock ]]; do
     sleep 1
   done
 
