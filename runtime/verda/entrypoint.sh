@@ -7,6 +7,19 @@ export PORT="${PORT:-7860}"
 export NO_TORCH_COMPILE="${NO_TORCH_COMPILE:-1}"
 mkdir -p "$HF_HOME" "$MODEL_DIR"
 
+nginx -c /app/runtime/verda/nginx.conf -g 'daemon off;' &
+NGINX_PID=$!
+
+cleanup() {
+  for pid in "${MOSHI_PID:-}" "${GRADIO_PID:-}" "$NGINX_PID"; do
+    [[ -n "$pid" ]] && kill "$pid" 2>/dev/null || true
+  done
+  wait || true
+}
+trap cleanup TERM INT EXIT
+
+# Nginx is intentionally up before the (large) gated model download.  Its
+# /health endpoint answers the platform startup probe while bootstrap runs.
 python3 /app/runtime/verda/bootstrap_model.py
 
 python3 -m moshi.server \
@@ -22,12 +35,8 @@ MOSHI_PID=$!
 python3 /app/runtime/verda/gradio_client.py &
 GRADIO_PID=$!
 
-trap 'kill "$MOSHI_PID" "$GRADIO_PID" 2>/dev/null || true; wait' TERM INT
-nginx -c /app/runtime/verda/nginx.conf -g 'daemon off;' &
-NGINX_PID=$!
-
 wait -n "$MOSHI_PID" "$GRADIO_PID" "$NGINX_PID"
 STATUS=$?
-kill "$MOSHI_PID" "$GRADIO_PID" "$NGINX_PID" 2>/dev/null || true
-wait || true
+trap - EXIT
+cleanup
 exit "$STATUS"
